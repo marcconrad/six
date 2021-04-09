@@ -3,7 +3,7 @@
 
 <head>
     <script>
-        var version = "0.1";
+        var version = "0.11";
 
   </script>
     </script>
@@ -122,7 +122,7 @@
         var seed = 17.1;
 
         function seed_random(m) {
-            seed = 17.3423 + parseFloat(m) * 1.353;
+            seed = 0.3423 + parseFloat(m) * 1.353;
         }
 
         function random() {
