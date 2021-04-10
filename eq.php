@@ -3,7 +3,7 @@
 
 <head>
     <script>
-        var version = "0.12";
+        var version = "0.13";
     </script>
     </script>
     <title>6EQ Game</title>
@@ -100,14 +100,14 @@
         <?php
         $count = 0;
         $ts  = -1;
-        $datetoday = "";
+        $now = "";
 
         if (isset($_GET["n"])) {
             $a = $_GET["n"];
             if ($a === "today") {
                 date_default_timezone_set('UTC');
                 $now = date('l jS \of F Y');
-                $count = hexdec("13".md5($now));
+                $count = hexdec("123".md5($now));
             } else {
                 $count = floatval($a);
               
@@ -160,18 +160,18 @@
 
         function seed_random() {
             var info = document.getElementById("count");
-            var m = parseFloat(info.innerHTML);
-            seed = Math.abs(0.3423 + m * 1.353);
-            while (seed > 59) {
-                seed = seed / 53;
-            }
-            console.log(seed);
+            var x = "ABC"+info.innerHTML+"plussomepaddingbecausethehashisrubbish"; 
+            console.log("x="+x); 
+            var m = Math.abs(x.hashCode());
+            console.log("m="+m); 
+            seed = parseFloat("0."+m); 
+            console.log("seed="+seed);
         }
 
         function random() {
 
             var x = Math.sin(seed++) * 10000; // don't laugh. Good enough for what we need here. 
-            console.log(x);
+           // console.log(x);
             return x - Math.floor(x);
         }
 
