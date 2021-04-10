@@ -3,9 +3,8 @@
 
 <head>
     <script>
-        var version = "0.11";
-
-  </script>
+        var version = "0.12";
+    </script>
     </script>
     <title>6EQ Game</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,14 +30,22 @@
             border-radius: 10px;
         }
 
+        
+        #permatoday {
+            background-color: lightsteelblue;
+            border-radius: 10px;
+        }
+
         #newgame {
             background-color: lightseagreen;
             border-radius: 10px;
         }
+
         #sharebtn {
             background-color: yellow;
             border-radius: 10px;
         }
+
         #moreinfobtn {
             background-color: yellow;
             border-radius: 10px;
@@ -93,9 +100,22 @@
         <?php
         $count = 0;
         $ts  = -1;
+        $datetoday = "";
 
         if (isset($_GET["n"])) {
-            $count = floatval($_GET["n"]);
+            $a = $_GET["n"];
+            if ($a === "today") {
+                date_default_timezone_set('UTC');
+                $now = date('l jS \of F Y');
+                $count = hexdec("13".md5($now));
+            } else {
+                $count = floatval($a);
+              
+                }  
+            $count = abs($count); 
+            while ($count > (1 << 30)) {
+                    $count /= 99997;
+            }
         } else {
             $countfile = "countlog4.txt";
             $datei = @fopen($countfile, "r");
@@ -111,22 +131,47 @@
             fclose($datei);
             echo "window.location.href = window.location.href+'?x=yes&n=$count';";
         }
+        $u = $_GET["m"] ?? "normal";
+
         echo "var maincount = $count;";
+        echo "\r\n";
+        echo "var gamemode = '$u';";
+        echo "\r\n";
+        echo "var datetoday = '$now';";
         echo "\r\n";
         echo "var maints = $ts;";
         echo "\r\n";
         echo "\r\n";
 
         ?>
-
+        // from: https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+        String.prototype.hashCode = function() {
+            var hash = 0,
+                i, chr;
+            if (this.length === 0) return hash;
+            for (i = 0; i < this.length; i++) {
+                chr = this.charCodeAt(i);
+                hash = ((hash << 5) - hash) + chr;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return hash;
+        };
         var seed = 17.1;
 
-        function seed_random(m) {
-            seed = 0.3423 + parseFloat(m) * 1.353;
+        function seed_random() {
+            var info = document.getElementById("count");
+            var m = parseFloat(info.innerHTML);
+            seed = Math.abs(0.3423 + m * 1.353);
+            while (seed > 59) {
+                seed = seed / 53;
+            }
+            console.log(seed);
         }
 
         function random() {
+
             var x = Math.sin(seed++) * 10000; // don't laugh. Good enough for what we need here. 
+            console.log(x);
             return x - Math.floor(x);
         }
 
@@ -891,6 +936,9 @@
             var newurl = tt + '?t=' + Date.now() + '&v=' + version + '&n=' + info.innerHTML;
             var t = document.getElementById("permalink");
             t.href = newurl;
+
+            var ttoday = document.getElementById("permatoday");
+            ttoday.href = tt + '?t=' + Date.now() + '&v=' + version + '&n=today';
             console.log(newurl);
         }
 
@@ -908,10 +956,10 @@
         }
 
         function newgame() {
-
-            seed_random(maincount.toFixed(3));
             var info = document.getElementById("count");
             info.innerHTML = "" + maincount.toFixed(3) + "";
+            seed_random();
+
             maincount = maincount + 0.001;
             equations = create_equations();
             if (equations === false) {
@@ -941,13 +989,16 @@
             }
             var info2 = document.getElementById("info2");
             info2.innerHTML = "Swap digits to make the equations correct!";
+            if(datetoday !== '') { 
+                info2.innerHTML = "6EQ of: "+datetoday+" (UTC)";
+            }
             permalinktothis();
 
         }
 
         function copy2clipboard() {
             var t = document.getElementById("permalink");
-            var copyText = document.getElementById("permashare"); 
+            var copyText = document.getElementById("permashare");
             copyText.value = t.href;
             copyText.type = 'text';
             copyText.select();
@@ -1141,7 +1192,7 @@
     <hr>
     <button id="moreinfobtn" onclick="toggleInfo()">❓</button>
     <button id="sharebtn" onclick="copy2clipboard()">↗️</button>
-    <input type="hidden" id="permashare" value="notset" /> 
+    <input type="hidden" id="permashare" value="notset" />
 
     <button id="checkbtn" onclick="testButton()">Check</button>
 
@@ -1181,6 +1232,11 @@
         <p>When you have solved the 6EQ game you will be given the opportunity to play a new game. The new game is dynamically created in your browser (so you can play offline).
             Use this button to download a new game from the server:
             <button id="newgameserverbtn" onClick="newgameserver()">New Game (Server)</button>
+        </p>
+        <p>For a permanent link to the game of 'today' (every day a new game) use this link: 
+                                <a id="permatoday" href="none"><button id="permatoday">6EQ of today</button></a>. 
+                                When you bookmark that link or add it to your home screen you have a new game every day! 
+            
         </p>
         <hr>
 
