@@ -3,7 +3,7 @@
 
 <head>
     <script>
-        var version = "0.13";
+        var version = "0.14";
     </script>
     </script>
     <title>6EQ Game</title>
@@ -30,7 +30,7 @@
             border-radius: 10px;
         }
 
-        
+
         #permatoday {
             background-color: lightsteelblue;
             border-radius: 10px;
@@ -42,6 +42,11 @@
         }
 
         #sharebtn {
+            background-color: yellow;
+            border-radius: 10px;
+        }
+
+        #permabtn {
             background-color: yellow;
             border-radius: 10px;
         }
@@ -63,7 +68,10 @@
         }
 
         .ijdiv {
-            font-size: 20px;
+            font-size: 20px;   
+            width: 1.3em;
+            height: 1.3em;
+            
             <?php
             if (isset($_GET["test"])) {
                 echo ' background-color: yellow;';
@@ -76,8 +84,7 @@
             ?>
             /* opacity: 0.5; */
 
-            width: 1.3em;
-            height: 1.3em;
+         
         }
 
         #count {
@@ -101,22 +108,10 @@
         $count = 0;
         $ts  = -1;
         $now = "";
+        $nn = $_GET["n"] ?? "today";
+        $info = "(not set)";
 
-        if (isset($_GET["n"])) {
-            $a = $_GET["n"];
-            if ($a === "today") {
-                date_default_timezone_set('UTC');
-                $now = date('l jS \of F Y');
-                $count = hexdec("123".md5($now));
-            } else {
-                $count = floatval($a);
-              
-                }  
-            $count = abs($count); 
-            while ($count > (1 << 30)) {
-                    $count /= 99997;
-            }
-        } else {
+        if ($nn === "newgame") {
             $countfile = "countlog4.txt";
             $datei = @fopen($countfile, "r");
             $data = @fgets($datei, 1000);
@@ -129,8 +124,19 @@
             $datei = fopen($countfile, "w");
             fwrite($datei, $count . "," . time());
             fclose($datei);
-            echo "window.location.href = window.location.href+'?x=yes&n=$count';";
+            $info = "New random game.";
+        } else if ($nn === "today") {
+            date_default_timezone_set('UTC');
+            $now = date('l jS \of F Y');
+            $count = hexdec("123" . md5($now));
+        } else {
+            $count = floatval($nn);
         }
+        $count = abs($count);
+        while ($count > (1 << 30)) {
+            $count /= 99997;
+        }
+
         $u = $_GET["m"] ?? "normal";
 
         echo "var maincount = $count;";
@@ -160,18 +166,18 @@
 
         function seed_random() {
             var info = document.getElementById("count");
-            var x = "ABC"+info.innerHTML+"plussomepaddingbecausethehashisrubbish"; 
-            console.log("x="+x); 
+            var x = "ABC" + info.innerHTML + "plussomepaddingbecausethehashisrubbish";
+            console.log("x=" + x);
             var m = Math.abs(x.hashCode());
-            console.log("m="+m); 
-            seed = parseFloat("0."+m); 
-            console.log("seed="+seed);
+            console.log("m=" + m);
+            seed = parseFloat("0." + m);
+            console.log("seed=" + seed);
         }
 
         function random() {
 
             var x = Math.sin(seed++) * 10000; // don't laugh. Good enough for what we need here. 
-           // console.log(x);
+            // console.log(x);
             return x - Math.floor(x);
         }
 
@@ -942,20 +948,45 @@
             console.log(newurl);
         }
 
+        function reloadperm() { 
+            var info = document.getElementById("count");
+            var url = window.location.href;
+            var x = url.split('?');
+            var tt = x[0].replace("perisic.com", "sanfoh.com");
+            var newurl = tt + '?t=' + Date.now() + '&v=' + version + '&n=' + info.innerHTML;
+            window.location.href = newurl;
+
+        }
+
         function startup() {
+          
             newgame();
+        }
+        function greyoutperm() { 
+            var ct = document.getElementById("count").innerHTML;
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const nn = urlParams.get('n')
+            console.log("nn="+nn); 
+            console.log("ct="+ct); 
+            if( ct === nn) { 
+                t = document.getElementById("permabtn");
+                console.log("Hello");
+                t.style.background = "lightgrey"; 
+            }
         }
 
         function newgameserver() {
             var url = window.location.href;
             var x = url.split('?');
-            var newurl = x[0] + '?t=' + Date.now();
+            var newurl = x[0] + '?n=newgame&t=' + Date.now();
             console.log(newurl);
             window.location.href = newurl;
 
         }
 
-        function newgame() {
+        function newgame() { 
+            setTimeout("greyoutperm()",100);
             var info = document.getElementById("count");
             info.innerHTML = "" + maincount.toFixed(3) + "";
             seed_random();
@@ -989,8 +1020,8 @@
             }
             var info2 = document.getElementById("info2");
             info2.innerHTML = "Swap digits to make the equations correct!";
-            if(datetoday !== '') { 
-                info2.innerHTML = "6EQ of: "+datetoday+" (UTC)";
+            if (datetoday !== '') {
+                info2.innerHTML = "6EQ of: " + datetoday + " (UTC)";
             }
             permalinktothis();
 
@@ -1190,8 +1221,9 @@
         ?>
     </table>
     <hr>
-    <button id="moreinfobtn" onclick="toggleInfo()">❓</button>
-    <button id="sharebtn" onclick="copy2clipboard()">↗️</button>
+    <button title="Click for more info" id="moreinfobtn" onclick="toggleInfo()">❓</button>
+    <button title="Share link on social media" id="sharebtn" onclick="copy2clipboard()">↗️</button>
+    <button title="Reload with a static link to this specific 6EQ Game" id="permabtn" onclick="reloadperm()">⚓</button>
     <input type="hidden" id="permashare" value="notset" />
 
     <button id="checkbtn" onclick="testButton()">Check</button>
@@ -1233,10 +1265,10 @@
             Use this button to download a new game from the server:
             <button id="newgameserverbtn" onClick="newgameserver()">New Game (Server)</button>
         </p>
-        <p>For a permanent link to the game of 'today' (every day a new game) use this link: 
-                                <a id="permatoday" href="none"><button id="permatoday">6EQ of today</button></a>. 
-                                When you bookmark that link or add it to your home screen you have a new game every day! 
-            
+        <p>For a permanent link to the game of 'today' (every day a new game) use this link:
+            <a id="permatoday" href="none"><button id="permatoday">6EQ of today</button></a>.
+            When you bookmark that link or add it to your home screen you have a new game every day!
+
         </p>
         <hr>
 
