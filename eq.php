@@ -1112,6 +1112,11 @@
             for (j = 0; j < tdivs.length; j++) {
                 if (isSwappable(tdivs[j]) !== false) {
                     stdivs[k++] = tdivs[j];
+                } else { 
+                    tdivs[j].removeAttribute("onclick"); 
+                    tdivs[j].removeAttribute("draggable"); 
+                    tdivs[j].parentNode.removeAttribute("ondragover");
+                    tdivs[j].parentNode.removeAttribute("ondrop")
                 }
             }
             for (s = 1; s < 3; s++) {
