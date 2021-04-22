@@ -45,6 +45,7 @@
             background-color: yellow;
             border-radius: 10px;
         }
+
         #sharebtn2 {
             background-color: yellow;
             border-radius: 10px;
@@ -54,6 +55,7 @@
             background-color: yellow;
             border-radius: 10px;
         }
+
         #permabtn2 {
             background-color: yellow;
             border-radius: 10px;
@@ -68,10 +70,14 @@
             background-color: lightpink;
             border-radius: 10px;
         }
-        
+
         #checkbtn2 {
             background-color: lightpink;
             border-radius: 10px;
+        }
+
+        .bottombtn {
+            height: 1.8em;
         }
 
 
@@ -81,10 +87,10 @@
         }
 
         .ijdiv {
-            font-size: 20px;   
+            font-size: 20px;
             width: 1.3em;
             height: 1.3em;
-            
+
             <?php
             if (isset($_GET["test"])) {
                 echo ' background-color: yellow;';
@@ -97,7 +103,7 @@
             ?>
             /* opacity: 0.5; */
 
-         
+
         }
 
         #count {
@@ -118,6 +124,17 @@
     </style>
     <script>
         <?php
+        $ff = @file_get_contents("shareA100.png");
+        if ($ff === false) {
+            echo 'var shareicon = false;';
+        } else {
+            $bb = base64_encode($ff);
+            // echo $bb; 
+            echo 'var shareicon = "<img height=\"11em\" src=\"data:image/png;base64,' . $bb . '\" alt=\"Share this\" />";';
+        }
+        echo "\r\n";
+        ?>
+        <?php
         $count = 0;
         $ts  = -1;
         $now = "";
@@ -125,7 +142,7 @@
         $info = "(not set)";
 
         if ($nn === "newgame") {
-            $countfile = "countlog4.txt";
+            $countfile = "countlog_sym.txt";
             $datei = @fopen($countfile, "r");
             $data = @fgets($datei, 1000);
             if ($data === FALSE) {
@@ -204,6 +221,18 @@
             return ret;
         }
         */
+        var lookupSymbols = {};
+        var symbols = ['❤️', '🍇', '🎂', '🍔', '🔥', '⛰️', '⚽', '🔮', '🚖', '🐘',
+            '💕', '🥕', '🎈', '🍕', '🏡', '🏀', '🌙', '🚔', '🐒', '🚩', '📚',
+            '💘', '🥝', '🕯️', '🧀', '🏘️', '🏓', '⛵', '🚒', '🦁', '🎓', '🧱'
+        ];
+
+        function addSymbol(i, j, s) {
+            var t = document.getElementById("tdiv" + i + "x" + j);
+            //  t.innerHTML = dig2html(symbols[s]);
+            t.innerHTML = dig2html(s);
+            // lookupSymbols[symbols[s]] = s;
+        }
         var op2html = {
             "p": '<b what="p" class="op">&plus;</b>',
             "m": '<b what="m" class="op">&minus;</b>',
@@ -212,15 +241,12 @@
             "e": '<b what="e" class="op">&equals;</b>'
         };
 
-        // var html2op = swap(op2html);
-
-
-
-
         function addOp(i, j, op) {
             t = document.getElementById("tdiv" + i + "x" + j);
             t.innerHTML = op2html[op];
         }
+
+
 
         function getOp(i, j) {
             // console.log(JSON.stringify(html2op)); 
@@ -243,28 +269,41 @@
             if (aa.length != 1) {
                 return 0;
             } else {
+                var t = aa[0].innerHTML;
+                if (t in lookupSymbols) {
+                    return -37;
+                }
                 ret = parseInt(aa[0].innerHTML);
+
                 if (isNaN(ret)) {
                     return 0;
                 }
+
                 return ret;
             }
         }
 
-        function isSwappable(divnode) {
+        function isSwappable(divnode, mustbeanumber = false) {
             var aa = divnode.childNodes;
             if (aa.length != 1) {
                 return false;
             } else {
-                ret = parseInt(aa[0].innerHTML);
+                var t = aa[0].innerHTML;
+                // console.log("t="+t); 
+                //  console.log(JSON.stringify(lookupSymbols)); 
+                if (mustbeanumber === false && (t in lookupSymbols)) {
+                    return "symbol";
+                }
+                ret = parseInt(t);
                 if (isNaN(ret)) {
                     return false;
                 }
-                return ret;
+                return "digit";
             }
         }
 
         function check_equation(eq) {
+            console.log(JSON.stringify(eq));
             var op = eq[1];
             res = null;
             if (op == "p") {
@@ -278,7 +317,7 @@
             } else {
                 return false;
             }
-            // console.log("res=" + res);
+
             if (Math.abs(res - parseInt(eq[4])) < 0.0001) {
                 return true;
             } else return false;
@@ -858,7 +897,9 @@
                 t = document.getElementById("tdiv" + i + "x" + (Math.floor(j) + num_digits - 1));
                 //  console.log("i=" + i + " j=" + j + " tinn=" + t.innerHTML);
                 d = html2dig(t);
+
                 // console.log("d=" + d);
+
                 n += (s * d);
                 s *= 10;
                 num_digits--;
@@ -925,13 +966,23 @@
             return res;
         }
 
+        function addEquationSymbols(i, j) {
+            for (k = 0; k < 10; k++) {
+                addSymbol(i + 6, j + k, k);
+
+            }
+        }
+
         function addAllEquations(i, j, eqs, num_digits = 3) {
+
+            addEquationSymbols(i, j);
             addEquationAcross(i, j, eqs[0], num_digits);
             addEquationAcross(i + 2, j, eqs[1], num_digits);
             addEquationAcross(i + 4, j, eqs[2], num_digits);
             addEquationDown(i, j, eqs[3], num_digits);
             addEquationDown(i, j + num_digits + 1, eqs[4], num_digits);
             addEquationDown(i, j + num_digits + 1 + num_digits + 1, eqs[5], num_digits);
+
         }
 
         function getAllEquations(i, j, num_digits = 3) {
@@ -944,6 +995,8 @@
             res[5] = getEquationDown(i, j + num_digits + 1 + num_digits + 1, num_digits);
             return res;
         }
+
+
         var startup_z = 0;
         var startup_id = null;
 
@@ -961,7 +1014,7 @@
             console.log(newurl);
         }
 
-        function reloadperm() { 
+        function reloadperm() {
             var info = document.getElementById("count");
             var url = window.location.href;
             var x = url.split('?');
@@ -971,27 +1024,37 @@
 
         }
 
+        function populatesharebutton() {
+            if (shareicon !== false) {
+                var t = document.getElementById("sharebtn");
+                t.innerHTML = shareicon;
+                var t = document.getElementById("sharebtn2");
+                t.innerHTML = shareicon;
+            }
+        }
+
         function startup() {
-          
+            setTimeout("populatesharebutton()", 100);
             newgame();
         }
-        function greyoutperm() { 
+
+        function greyoutperm() {
             var ct = document.getElementById("count").innerHTML;
             const queryString = window.location.search;
             const urlParams = new URLSearchParams(queryString);
             const nn = urlParams.get('n')
-            console.log("nn="+nn); 
-            console.log("ct="+ct);  
-             t = document.getElementById("permabtn");
-            if( ct === nn) {     
-                t.style.background = "lightgrey"; 
-            } else { 
+            console.log("nn=" + nn);
+            console.log("ct=" + ct);
+            t = document.getElementById("permabtn");
+            if (ct === nn) {
+                t.style.background = "lightgrey";
+            } else {
                 t.style.background = "yellow";
             }
             t2 = document.getElementById("permabtn2");
-            if( ct === nn) {     
-                t2.style.background = "lightgrey"; 
-            } else { 
+            if (ct === nn) {
+                t2.style.background = "lightgrey";
+            } else {
                 t2.style.background = "yellow";
             }
         }
@@ -1005,8 +1068,8 @@
 
         }
 
-        function newgame() { 
-            setTimeout("greyoutperm()",100);
+        function newgame() {
+            setTimeout("greyoutperm()", 100);
             var info = document.getElementById("count");
             info.innerHTML = "" + maincount.toFixed(3) + "";
             seed_random();
@@ -1039,9 +1102,9 @@
                 ng.style.display = "none";
             }
             var info2 = document.getElementById("info2");
-            info2.innerHTML = "Swap digits to make the equations correct!";
+            info2.innerHTML = "Each emoji represents a digit. <br> Swap digits and emojis to make the equations correct!";
             if (datetoday !== '') {
-                info2.innerHTML = "6EQ of: " + datetoday + " (UTC)";
+                info2.innerHTML = "6EQ of: " + datetoday + " (UTC) <br> Each emoji represents a digit.";
             }
             permalinktothis();
 
@@ -1071,7 +1134,7 @@
                     //  info.innerHTML = "FALSE: " + i + ".";
                     info.innerHTML = "💩";
                     var info2 = document.getElementById("info2");
-                    info2.innerHTML = "Swap digits to make the equations correct!";
+                    info2.innerHTML = "Swap digits and symbols to make the equations correct!";
                     var ng = document.getElementById("newgame");
                     ng.style.display = "none";
                     return;
@@ -1099,12 +1162,13 @@
 
 
     <script>
+        /*
         function checkAndReport(i, j, num_digits = 3) {
             ta = document.getElementById("outputdebug");
             xa = getAllEquations(i, j);
             ta.innerHTML = JSON.stringify(xa);
         }
-
+*/
         function swapft(finn, tinn) {
             // console.log("finn="+finn+" tinn="+tinn); 
             var tdivs = document.getElementsByClassName("ijdiv");
@@ -1122,7 +1186,7 @@
             var info = document.getElementById("info");
             // info.innerHTML = "Swap "+finn+" and "+tinn;
             info.innerHTML = "🤔";
-            checkAndReport(0, 0);
+            // checkAndReport(0, 0);
         }
 
         function randomswap() {
@@ -1130,11 +1194,15 @@
             var stdivs = [];
             var k = 0;
             for (j = 0; j < tdivs.length; j++) {
-                if (isSwappable(tdivs[j]) !== false) {
+                if (isSwappable(tdivs[j]) === "digit") {
                     stdivs[k++] = tdivs[j];
-                } else { 
-                    tdivs[j].removeAttribute("onclick"); 
-                    tdivs[j].removeAttribute("draggable"); 
+                    tdivs[j].setAttribute("onclick", "clicked(event)");
+                    tdivs[j].setAttribute("draggable", true);
+                    tdivs[j].parentNode.setAttribute("ondragover", "allowDrop(event)");
+                    tdivs[j].parentNode.setAttribute("ondrop", "drop(event)");
+                } else {
+                    tdivs[j].removeAttribute("onclick");
+                    tdivs[j].removeAttribute("draggable");
                     tdivs[j].parentNode.removeAttribute("ondragover");
                     tdivs[j].parentNode.removeAttribute("ondrop")
                 }
@@ -1152,6 +1220,21 @@
                     // }
                 }
             }
+
+            var z = Math.floor(random() * symbols.length);
+            for (var j = 0; j < stdivs.length; j++) {
+                var a = j;
+                var b = Math.floor(random() * stdivs.length);
+                var aa = stdivs[a];
+                //  console.log("aa=" + aa.innerHTML);  
+                if (isSwappable(aa) === "digit") {
+                    var xx = z++ % symbols.length;
+                    lookupSymbols[symbols[xx]] = xx;
+                    swapft(aa.innerHTML, dig2html(symbols[xx]));
+                }
+            }
+            addEquationSymbols(0, 0);
+
         }
 
         function allowDrop(ev) {
@@ -1229,7 +1312,7 @@
     <table width="100px">
         <caption id="captionsix">Six Equations</caption>
         <?php
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 7; $i++) {
             echo "<tr>";
             for ($j = 0; $j < 11; $j++) {
                 echo "<td id=\"td" . $i . "x" . $j . "\" class=\"ij\" ondrop=\"drop(event)\" ondragover=\"allowDrop(event)\">";
@@ -1246,15 +1329,16 @@
         ?>
     </table>
     <hr>
-    <button title="Click for more info" id="moreinfobtn" onclick="toggleInfo()">❓</button>
-    <button title="Share link on social media" id="sharebtn" onclick="copy2clipboard()">↗️</button>
-    <button title="Reload with a static link to this specific 6EQ Game" id="permabtn" onclick="reloadperm()">⚓</button>
     <input type="hidden" id="permashare" value="notset" />
+    <button class="bottombtn" title="Click for more info" id="moreinfobtn" onclick="toggleInfo()">❓</button>
+    <button class="bottombtn" title="Share link on social media" id="sharebtn" onclick="copy2clipboard()">↗️</button>
+    <button class="bottombtn" title="Reload with a static link to this specific 6EQ Game" id="permabtn" onclick="reloadperm()">⚓</button>
 
-    <button id="checkbtn" onclick="testButton()">Check</button>
 
-    <span id="info">[info]</span>
-    <p><span id="info2">Swap digits to make the equations correct!</span></p>
+    <button class="bottombtn" id="checkbtn" onclick="testButton()">Check</button>
+
+    <span class="bottombtn" id="info">o_o</span>
+    <p><span id="info2">Each symbol represents a digit. Swap digits and symbols to make the equations correct!</span></p>
 
     <span hidden id="clickedfirst">F</span>
     <div hidden id="outputdebug">empty</div>
@@ -1274,19 +1358,20 @@
     </script>
     <div id="moreinfo" style="display:none">
         <p>
-            Click on a digit; then click another digit to swap the two digits. For instance, if you click on <em>any</em> of the
+            Click on an emoji or digit; then click another one to swap the two.
+            <!-- For instance, if you click on <em>any</em> of the
             <span class="digit">'1'</span> and then at <em>any</em> of the <span class="digit">'9'</span> you swap all
-            the <span class="digit">'1'</span> with all the <span class="digit">'9'</span> in this game. 
+            the <span class="digit">'1'</span> with all the <span class="digit">'9'</span> in this game. -->
         </p>
         <p>
-            When you think that all six equations are correct press the    <button id="checkbtn2" onclick="testButton()">Check</button> button. 
+            When you think that all six equations are correct press the <button id="checkbtn2" onclick="testButton()">Check</button> button.
             There always is a solution.
         </p>
         <p>If your device has a mouse, you can also drag and drop.</p>
         <p>
-            Each 6EQ Game has a unique id. Click <a id="permalink" href="none"><button id="count"></button></a> or 
+            Each 6EQ Game has a unique id. Click <a id="permalink" href="none"><button id="count"></button></a> or
             <button title="Reload with a static link to this specific 6EQ Game" id="permabtn2" onclick="reloadperm()">⚓</button>
-            in the main menue to open a permalink to this specific game. Use the     <button title="Share link on social media" id="sharebtn2" onclick="copy2clipboard()">↗️</button>
+            in the main menu to open a permalink to this specific game. Use the <button title="Share link on social media" id="sharebtn2" onclick="copy2clipboard()">↗️</button>
             button to copy a link to the clipboard that can be shared on social media.
 
         </p>
@@ -1311,6 +1396,7 @@
             </small>
         </p>
     </div>
+
 </body>
 
 </html>
