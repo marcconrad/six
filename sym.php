@@ -3,7 +3,7 @@
 
 <head>
     <script>
-        var version = "0.15";
+        var version = "0.16";
     </script>
     </script>
     <title>6EQ Game</title>
@@ -168,7 +168,10 @@
         }
 
         $u = $_GET["m"] ?? "normal";
+        $mc  = $_GET["mustcontain"] ?? '';
 
+        echo "var mustcontain = [ $mc ];";
+        echo "\r\n";
         echo "var maincount = $count;";
         echo "\r\n";
         echo "var gamemode = '$u';";
@@ -180,6 +183,47 @@
         echo "\r\n";
 
         ?>
+
+        function doeseqscontain_help(eq, i) {
+            var a = parseInt(mustcontain[i]);
+            if (parseInt(eq[0][0]) == a) {
+                return true;
+            }
+            if (parseInt(eq[0][2]) == a) {
+                return true;
+            }
+            if (parseInt(eq[0][4]) == a) {
+                return true;
+            }
+            if (parseInt(eq[2][0]) == a) {
+                return true;
+            }
+            if (parseInt(eq[2][2]) == a) {
+                return true;
+            }
+            if (parseInt(eq[2][4]) == a) {
+                return true;
+            }
+            if (parseInt(eq[4][0]) == a) {
+                return true;
+            }
+            if (parseInt(eq[4][2]) == a) {
+                return true;
+            }
+            if (parseInt(eq[4][4]) == a) {
+                return true;
+            }
+            return false;
+        }
+
+        function doeseqscontain(eq) {
+            for (var i = 0; i < mustcontain.length; i++) {
+                if (doeseqscontain_help(eq, i) === false) {
+                    return false;
+                }
+            }
+            return true;
+        }
         // from: https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
         String.prototype.hashCode = function() {
             var hash = 0,
@@ -222,9 +266,9 @@
         }
         */
         var lookupSymbols = {};
-        var symbols = ['❤️', '🍇', '🎂', '🍔', '🔥', '⛰️', '⚽', '🔮', '🚖', '🐘',
-            '💕', '🥕', '🎈', '🍕', '🏡', '🏀', '🌙', '🚔', '🐒', '🚩', '📚',
-            '💘', '🥝', '🕯️', '🧀', '🏘️', '🏓', '⛵', '🚒', '🦁', '🎓', '🧱'
+        var symbols = ['❤️', '🍇', '🎂', '🍔','⛰️', '⚽', '🔮', '🚖', '🐘','🔥',
+                       '💕', '🥕', '🎈', '🍕', '🏡', '🏀', '🌙', '🚔', '🐒', '🚩', '📚',
+                       '💘', '🥝', '🕯️', '🧀', '🏘️', '🏓', '⛵', '🚒', '🦁', '🎓', '🧱'
         ];
 
         function addSymbol(i, j, s) {
@@ -1076,7 +1120,8 @@
 
             maincount = maincount + 0.001;
             equations = create_equations();
-            if (equations === false) {
+            var x = doeseqscontain(equations); 
+            if (equations === false || x === false) {
                 var info = document.getElementById("info");
                 info.innerHTML = "⌛ (" + (startup_z++) + ").";
                 clearTimeout(startup_id);
@@ -1097,6 +1142,7 @@
                     echo 'setTimeout("testButton()", ' . ($_GET["speed"] ?? 10) . ');';
                     echo "\r\n";
                 }
+    
                 ?>
                 var ng = document.getElementById("newgame");
                 ng.style.display = "none";
@@ -1310,7 +1356,7 @@
 
 <body onload="startup()">
     <table width="100px">
-        <caption id="captionsix">Six Equations</caption>
+        <caption id="captionsix">Six Equations &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; www.sanfoh.com</caption>
         <?php
         for ($i = 0; $i < 7; $i++) {
             echo "<tr>";
