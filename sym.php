@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="utf-8">
     <script>
         var version = "0.16";
     </script>
     </script>
     <title>6EQ Game</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <notmeta content="text/html" http-equiv="Content-Type">
+
 
     <style>
         #moreinfo {
@@ -32,6 +34,11 @@
 
 
         #permatoday {
+            background-color: lightsteelblue;
+            border-radius: 10px;
+        }
+
+        #permatoday2 {
             background-color: lightsteelblue;
             border-radius: 10px;
         }
@@ -68,6 +75,16 @@
 
         #checkbtn {
             background-color: lightpink;
+            border-radius: 10px;
+        }
+
+        #downloadbtn {
+            background-color: lightblue;
+            border-radius: 10px;
+        }
+
+        #hintbtn {
+            background-color: lightblue;
             border-radius: 10px;
         }
 
@@ -266,16 +283,36 @@
         }
         */
         var lookupSymbols = {};
-        var symbols = ['❤️', '🍇', '🎂', '🍔','⛰️', '⚽', '🔮', '🚖', '🐘','🔥',
-                       '💕', '🥕', '🎈', '🍕', '🏡', '🏀', '🌙', '🚔', '🐒', '🚩', '📚',
-                       '💘', '🥝', '🕯️', '🧀', '🏘️', '🏓', '⛵', '🚒', '🦁', '🎓', '🧱'
+
+        var symbolsNOT = ['❤️', '🍇', '🎂', '🍔', '⛰️', '⚽', '🔮', '🚖', '🐘', '🔥',
+            '💕', '🥕', '🎈', '🍕', '🏡', '🏀', '🌙', '🚔', '🐒', '🚩', '📚',
+            '💘', '🥝', '🕯️', '🧀', '🏘️', '🏓', '⛵', '🚒', '🦁', '🎓', '🧱'
         ];
+
+        var symbols = ['🍇', '🎂', '🍔', '⛰️', '⚽', '🔮', '🚖', '🐘', '🔥',
+            '🥕', '🎈', '🍕', '🏡', '🏀', '🌙', '🚔', '🐒', '🚩', '📚',
+            '🥝', '🕯️', '🧀', '🏘️', '🏓', '⛵', '🚒', '🦁', '🎓', '🧱'
+        ];
+
+        function getSymbol(offset) {
+            // var sy = symbols[offset % symbols.length];
+            var t = 100;
+            var sy = '❤️';
+            while (sy in lookupSymbols && t-- > 0) {
+                sy = symbols[offset++ % symbols.length];
+            }
+            if (t <= 0) {
+                sy = '❌';
+            }
+            lookupSymbols[sy] = 13;
+            return sy;
+        }
 
         function addSymbol(i, j, s) {
             var t = document.getElementById("tdiv" + i + "x" + j);
-            //  t.innerHTML = dig2html(symbols[s]);
+
             t.innerHTML = dig2html(s);
-            // lookupSymbols[symbols[s]] = s;
+
         }
         var op2html = {
             "p": '<b what="p" class="op">&plus;</b>',
@@ -1078,8 +1115,19 @@
         }
 
         function startup() {
+            populateJJ();
+            console.log(JSON.stringify(lookupJJ));
             setTimeout("populatesharebutton()", 100);
-            newgame();
+            // setTimeout("loadImg2Canvas()", 100);
+            <?php
+            if (isset($_GET["dump"])) {
+                echo 'doImg();';
+            } else {
+                echo 'newgame();';
+            }
+            ?>
+
+            // newgame();
         }
 
         function greyoutperm() {
@@ -1111,16 +1159,38 @@
             window.location.href = newurl;
 
         }
+        var solution = {};
+
+        function collectSolution() {
+            for (var i = 0; i < 11; i++) {
+                for (var j = 0; j < 5; j++) {
+                    var id = "tdiv" + j + "x" + i;
+                    console.log("id=" + id);
+                    tdiv = document.getElementById(id);
+                    console.log("tdiv=" + tdiv);
+                    if (tdiv !== null) {
+                        var aa = tdiv.childNodes;
+                        var t = (aa.length == 1 ? aa[0].innerHTML : "X");
+                        if (isNaN(parseInt(t)) === false) {
+                            solution[id] = t;
+                        }
+                    }
+                }
+            }
+
+
+        }
 
         function newgame() {
             setTimeout("greyoutperm()", 100);
             var info = document.getElementById("count");
             info.innerHTML = "" + maincount.toFixed(3) + "";
             seed_random();
+            lookupSymbols = {};
 
             maincount = maincount + 0.001;
             equations = create_equations();
-            var x = doeseqscontain(equations); 
+            var x = doeseqscontain(equations);
             if (equations === false || x === false) {
                 var info = document.getElementById("info");
                 info.innerHTML = "⌛ (" + (startup_z++) + ").";
@@ -1132,6 +1202,8 @@
                 var info = document.getElementById("info");
                 info.innerHTML = "🏠";
                 addAllEquations(0, 0, equations);
+                collectSolution();
+                // solution = equations;
 
                 <?php
                 if (isset($_GET["noswap"]) === false && isset($_GET["test"]) === false) {
@@ -1142,7 +1214,7 @@
                     echo 'setTimeout("testButton()", ' . ($_GET["speed"] ?? 10) . ');';
                     echo "\r\n";
                 }
-    
+
                 ?>
                 var ng = document.getElementById("newgame");
                 ng.style.display = "none";
@@ -1202,19 +1274,16 @@
             ?>
 
         }
-    </script>
 
+        function setBackgroundWhite() {
+            var tdivs = document.getElementsByClassName("ijdiv");
 
-
-
-    <script>
-        /*
-        function checkAndReport(i, j, num_digits = 3) {
-            ta = document.getElementById("outputdebug");
-            xa = getAllEquations(i, j);
-            ta.innerHTML = JSON.stringify(xa);
+            for (i = 0; i < tdivs.length; i++) {
+                var x = tdivs[i];
+                x.style.background = "white";
+            }
         }
-*/
+
         function swapft(finn, tinn) {
             // console.log("finn="+finn+" tinn="+tinn); 
             var tdivs = document.getElementsByClassName("ijdiv");
@@ -1225,7 +1294,8 @@
                 } else if (x.innerHTML == tinn) {
                     x.innerHTML = finn;
                 }
-                x.style.background = "white";
+
+                // x.style.background = "pink";
                 ff = document.getElementById("clickedfirst");
                 ff.innerHTML = "F";
             }
@@ -1241,6 +1311,7 @@
             var k = 0;
             for (j = 0; j < tdivs.length; j++) {
                 if (isSwappable(tdivs[j]) === "digit") {
+                    tdivs[j].style.background = "blue";
                     stdivs[k++] = tdivs[j];
                     tdivs[j].setAttribute("onclick", "clicked(event)");
                     tdivs[j].setAttribute("draggable", true);
@@ -1274,12 +1345,14 @@
                 var aa = stdivs[a];
                 //  console.log("aa=" + aa.innerHTML);  
                 if (isSwappable(aa) === "digit") {
-                    var xx = z++ % symbols.length;
-                    lookupSymbols[symbols[xx]] = xx;
-                    swapft(aa.innerHTML, dig2html(symbols[xx]));
+                    // var xx = z++ % symbols.length;
+                    var sy = getSymbol(z++);
+                    // lookupSymbols[sy] = 13;
+                    swapft(aa.innerHTML, dig2html(sy));
                 }
             }
             addEquationSymbols(0, 0);
+            setTimeout("setBackgroundWhite()", 500);
 
         }
 
@@ -1317,8 +1390,9 @@
                 var info = document.getElementById("info");
                 info.innerHTML = "💡";
             } else {
-                todiv.style.background = "grey";
+                // todiv.style.background = "grey";
                 swapft(todiv.innerHTML, ff.innerHTML);
+                setTimeout("setBackgroundWhite()", 50);
 
             }
 
@@ -1349,6 +1423,390 @@
             // console.log("(2) fromdiv=" + fromdiv + " todiv=" + todiv);
 
         }
+
+
+        function doImg() {
+            setBackgroundWhite();
+            var b = document.getElementsByTagName("body");
+            b[0].style.backgroundColor = "green";
+            var tdivs = document.getElementsByClassName("ijdiv");
+            lookupSymbols = {};
+            var jj = 0;
+
+            Object.keys(op2html).forEach(key => {
+
+                tdivs[jj++].innerHTML = op2html[key];
+
+            });
+            while (jj <= 10) {
+                tdivs[jj++].innerHTML = dig2html(' ');
+
+            }
+            for (i = 0; i <= 9; i++) {
+                tdivs[jj++].innerHTML = dig2html(i);
+
+            }
+
+            tdivs[jj++].innerHTML = dig2html(' ');
+            for (var j = jj; j < tdivs.length; j++) {
+                var aa = tdivs[j];
+                var sy = getSymbol(0);
+                aa.innerHTML = sy;
+            }
+
+
+        }
+        var lookupJJ = {};
+
+        function populateJJ() {
+            lookupSymbols = {};
+            var jj = 0;
+            var tdivs = document.getElementsByClassName("ijdiv");
+
+            lookupJJ["+"] = jj++;
+            lookupJJ["−"] = jj++;
+            lookupJJ["×"] = jj++;
+            lookupJJ["÷"] = jj++;
+            lookupJJ["="] = jj++;
+
+
+            Object.keys(op2html).forEach(key => {
+
+                lookupJJ[op2html[key].innerHTML] = jj++;
+
+            });
+            while (jj <= 10) {
+                lookupJJ[' '] = jj++;
+            }
+            for (i = 0; i <= 9; i++) {
+                lookupJJ[i] = jj++;
+            }
+            lookupJJ[' '] = jj++;
+
+            for (var j = jj; j < tdivs.length; j++) {
+
+                var sy = getSymbol(0);
+                lookupJJ[sy] = j;
+            }
+
+
+        }
+        var candata = {
+            "top": 0,
+            "left": 0
+        };
+
+        function isWhite(imgData, x, y) {
+            let index = (y * imgData.width + x) * 4;
+            let red = imgData.data[index];
+            let green = imgData.data[index + 1];
+            let blue = imgData.data[index + 2];
+            if (red > 200 && green > 200 & blue > 200) return true;
+            return false;
+        }
+
+        function isGreen(imgData, x, y) {
+            let index = (y * imgData.width + x) * 4;
+            let red = imgData.data[index];
+            let green = imgData.data[index + 1];
+            let blue = imgData.data[index + 2];
+            console.log("red=" + red + "; green=" + green + "; blue=" + blue);
+            if (red < 10 && green > 100 & blue < 10) return true;
+            return false;
+        }
+
+        function downloadstart() {
+            var canvas = document.getElementById('canvas');
+            if (canvas.getContext) {
+
+                ctx = canvas.getContext('2d');
+
+                //Loading of the home test image - img1
+                var img = new Image();
+
+                //drawing of the test image - img1
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height; // canvas.width * (img.height / img.width);
+                    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
+                    let imgData = false; // initially no image data we have
+
+                    // create some function block 
+
+                    imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                    var found = false;
+                    var z = 1000;
+                    var x = 1;
+                    var y = 1;
+                    while (z-- > 0 && isWhite(imgData, x, y) === false) {
+                        x++;
+                        y++;
+                    }
+                    while (z-- > 0 && isWhite(imgData, x - 1, y)) {
+                        x--;
+                    }
+                    while (z-- > 0 && isWhite(imgData, x, y - 1)) {
+                        y--;
+                    }
+                    candata.top = y;
+                    candata.left = x;
+                    while (z-- > 0 && isGreen(imgData, x + 1, y + 1) === false) {
+                        x++;
+                        y++;
+                    }
+                    x++;
+                    y++;
+                    while (z-- > 0 && isWhite(imgData, x, y) === false) {
+                        x--;
+                        y--;
+                    }
+                    while (z-- > 0 && isWhite(imgData, x + 1, y)) {
+                        x++;
+                    }
+                    while (z-- > 0 && isWhite(imgData, x, y + 1)) {
+                        y++;
+                    }
+
+                    candata.bottom = y;
+                    candata.right = x;
+
+                    while (z-- > 0 && isWhite(imgData, x + 1, y) === false) {
+                        x++;
+                    }
+                    x++;
+                    while (z-- > 0 && isWhite(imgData, x, y + 1) === false) {
+                        y++;
+                    }
+                    y++;
+                    candata.nextX = x;
+                    candata.nextY = y;
+
+
+                    candata.offsetX = candata.left;
+                    candata.offsetY = candata.top;
+
+                    candata.lengthX = candata.right - candata.left;
+                    candata.lengthY = candata.bottom - candata.top;
+
+                    candata.gapX = candata.nextX - candata.right;
+                    candata.gapY = candata.nextY - candata.bottom;
+
+                    console.log("z=" + z);
+                    console.log(JSON.stringify(candata));
+                    console.log('pix x ' + x + ' y ' + y + ' t= ' + t);
+                    downloadnow();
+
+
+
+
+                };
+
+                img.src = 'symbols.png';
+            }
+        }
+
+        function loopIJdivs() {
+            var tdivs = document.getElementsByClassName("ijdiv");
+            for (var i = 0; i < tdivs.length; i++) {
+                var divnode = tdivs[i];
+                var aa = divnode.childNodes;
+                var aaa = (aa.length == 1 ? aa[0].innerHTML : ' ');
+
+                console.log(aaa);
+                console.log("goes to:");
+                var t = lookupJJ[aaa];
+                console.log(t);
+            }
+        }
+
+        function getXYc(i, j) {
+            var a = {};
+            a.x = candata.offsetX + i * (candata.lengthX + candata.gapX);
+            a.y = candata.offsetY + j * (candata.lengthY + candata.gapY);
+            return a;
+        }
+
+        function getXY(divnode) {
+            var aa = divnode.childNodes;
+            var aaa = (aa.length == 1 ? aa[0].innerHTML : ' ');
+            var t = lookupJJ[aaa];
+            var b = {};
+            b.x = Math.floor(t % 11);
+            b.y = Math.floor(t / 11);
+            return (getXYc(b.x, b.y));
+        }
+
+        var downloading = false; 
+        var downloadanimtoggle = false; 
+        function startDownloadAnim() { 
+            downloading = true; 
+            downloadAnim(); 
+        }
+        function stopDownloadAnim() { 
+            downloading = false; 
+        }
+        function downloadAnim() { 
+            var a = document.getElementById("info");
+            a.innerHTML = downloadanimtoggle ? "💾" : "💌"; 
+            downloadanimtoggle = !downloadanimtoggle; 
+            if(downloading) { 
+                setTimeout("downloadAnim()", 132); 
+            } else { 
+                info.innerHTML = "😊"; 
+            }
+
+        }
+
+        function downloadError() { 
+            var a = document.getElementById("info");
+            downloading = false; 
+            info.innerHTML = "E";  
+        }
+
+        function downloadnow() {
+            startDownloadAnim(); 
+            var canvas1 = document.getElementById('canvascropped');
+            if (canvas1.getContext) {
+
+                ctx1 = canvas1.getContext('2d');
+                ctx1.fillRect(20, 20, 150, 100);
+
+                //Loading of the home test image - img1
+                var img1 = new Image();
+
+                //drawing of the test image - img1
+                // img1.onerror = downloadError(); 
+                img1.onload = function() {
+                    canvas1.width = 660;
+                    canvas1.height = 360; // canvas1.width * (img1.height / img1.width);
+                    ctx1.fillStyle = "white";
+                    ctx1.fillRect(0, 0, canvas1.width, canvas1.height);
+                    console.log(JSON.stringify(candata));
+        
+                    ctx1.font = "18px Times bold";
+                    ctx1.fillStyle = "brown";
+                    ctx1.fillText("Six Equations         www.sanfoh.com", 30, 30);
+                    for (var i = 0; i < 5; i++) {
+
+                        for (var j = 0; j < 11; j++) {
+                            var id = "tdiv" + i + "x" + j;
+                            var divnode = document.getElementById(id);
+                            console.log(divnode.innerHTML);
+                            b = getXY(divnode);
+                            var fw = Math.floor(canvas1.width / 11);
+                            var fh = Math.floor(canvas1.height / 6);
+                            ctx1.drawImage(img1, b.x, b.y, candata.lengthX, candata.lengthY, fw * j, 45 + fh * i, fw, fh);
+                        }
+                    }
+
+
+                    doDownload();
+                };
+                // var canvas = document.getElementById('canvas');
+                // img1.src = canvas.toDataURL()
+                img1.src = 'symbols.png';
+            }
+        }
+
+        function doDownload() {
+            var canvas = document.getElementById("canvascropped");
+            var anchor = document.createElement("a");
+            anchor.innerHTML = "Click here if download does not start.";
+            // image/png, image/gif, image/jpeg
+            anchor.href = canvas.toDataURL("image/png");
+            anchor.download = "image.png";
+            document.getElementById("downloadlink").appendChild(anchor);
+            anchor.click();
+            setTimeout("stopDownloadAnim()", 1000); 
+        }
+
+        function findTdivWithSymbol() {
+            var z = 100;
+            while (z-- > 0) {
+                var i = Math.floor(random() * 11);
+                var j = Math.floor(random() * 5);
+                var id = "tdiv" + j + "x" + i;
+                console.log("id=" + id);
+                tdiv = document.getElementById(id);
+                console.log("tdiv=" + tdiv);
+                if (tdiv !== null) {
+                    var aa = tdiv.childNodes;
+                    var t = (aa.length == 1 ? aa[0].innerHTML : "X");
+                    console.log("t=" + t);
+                    if (t in lookupSymbols) {
+                        var ret = {};
+                        ret.tdiv = tdiv;
+                        ret.i = i;
+                        ret.j = j;
+                        ret.t = t;
+                        ret.id = id;
+                        console.log(JSON.stringify(ret));
+                        return ret;
+                    }
+                }
+
+
+            }
+            console.log("false has been returned (1000)");
+            return false;
+
+        }
+
+        function findTdivWith(digit) {
+            var tdivs = document.getElementsByClassName("ijdiv");
+            for (var i = 0; i < tdivs.length; i++) {
+                if (tdivs[i] !== null) {
+                    var aa = tdivs[i].childNodes;
+                    var t = (aa.length == 1 ? aa[0].innerHTML : "X");
+                    console.log("t=" + t + "; digit=" + digit);
+                    if (t == digit) {
+                        return tdivs[i];
+                    }
+                }
+            }
+            return false;
+        }
+
+        function findTdivWithSymbol_NOT() {
+
+
+            var tdivs = document.getElementsByClassName("ijdiv");
+            var z = Math.floor(random() * 300000);
+            var zz = tdivs.length;
+
+            for (var i = 0; i < zz; i++) {
+                var q = (i + z) % zz;
+                var aa = tdivs[q].childNodes;
+                var t = (aa.length == 1 ? aa[0].innerHTML : "X");
+                console.log("t=" + t);
+                if (t in lookupSymbols) {
+                    return tdivs[q];
+                }
+            }
+            return false;
+        }
+
+        function doHint() {
+            console.log(JSON.stringify(solution));
+            var a = findTdivWithSymbol();
+            var z = a.id;
+            var v = solution[z];
+
+            console.log("The solution for " + a.t + " is " + v);
+            var b = findTdivWith(v);
+            //  var b = document.getElementById("tdiv1x1");
+            if (a !== false) {
+                swapft(a.tdiv.innerHTML, b.innerHTML);
+            } else {
+                console.log("a is false; no hint is available");
+                var info2 = document.getElementById("info2");
+                info2.innerHTML = "Sorry, no hint is available! There is no symbol that can be replaced.";
+            }
+
+
+
+        }
     </script>
 
 
@@ -1376,15 +1834,23 @@
     </table>
     <hr>
     <input type="hidden" id="permashare" value="notset" />
+    <canvas hidden id="canvas">Canvas Here</canvas>
+    <canvas hidden id="canvascropped">Canvas Cropped Here</canvas>
     <button class="bottombtn" title="Click for more info" id="moreinfobtn" onclick="toggleInfo()">❓</button>
     <button class="bottombtn" title="Share link on social media" id="sharebtn" onclick="copy2clipboard()">↗️</button>
     <button class="bottombtn" title="Reload with a static link to this specific 6EQ Game" id="permabtn" onclick="reloadperm()">⚓</button>
-
+    <button class="bottombtn" id="downloadbtn" onclick="downloadstart()">Download</button>
 
     <button class="bottombtn" id="checkbtn" onclick="testButton()">Check</button>
 
-    <span class="bottombtn" id="info">o_o</span>
+  
+
+    <div hidden id="downloadlink"></div>
+
+    <span class="bottombtn" id="info">🔨</span>
     <p><span id="info2">Each symbol represents a digit. Swap digits and symbols to make the equations correct!</span></p>
+
+
 
     <span hidden id="clickedfirst">F</span>
     <div hidden id="outputdebug">empty</div>
@@ -1393,6 +1859,7 @@
     </p>
     <script>
         function toggleInfo() {
+            setTimeout("stopDownloadAnim()", 100); 
             var x = document.getElementById("moreinfo");
             console.log("x.style.display=" + x.style.display);
             if (x.style.display === "none") {
@@ -1414,6 +1881,8 @@
             There always is a solution.
         </p>
         <p>If your device has a mouse, you can also drag and drop.</p>
+        <p>If you are stuck then press  <button class="bottombtn" id="hintbtn" onclick="doHint()">Hint</button> which will replace one of the pictures with the correct digit. 
+    </p>
         <p>
             Each 6EQ Game has a unique id. Click <a id="permalink" href="none"><button id="count"></button></a> or
             <button title="Reload with a static link to this specific 6EQ Game" id="permabtn2" onclick="reloadperm()">⚓</button>
@@ -1426,7 +1895,7 @@
             <button id="newgameserverbtn" onClick="newgameserver()">New Game (Server)</button>
         </p>
         <p>For a permanent link to the game of 'today' (every 24 hours a new game) use this link:
-            <a id="permatoday" href="none"><button id="permatoday">6EQ of today</button></a>.
+            <a id="permatoday" href="none"><button id="permatoday2">6EQ of today</button></a>.
             When you bookmark that link or add it to your home screen you enjoy a new game every day!
 
         </p>
