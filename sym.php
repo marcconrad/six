@@ -185,10 +185,20 @@
             }
 
             $heartcreate = $_GET["heart"] ?? "false";
-            $smile = isset($_GET["smile"] ) ? "true" : "false"; // use smile instead of heart
+            $smile = isset($_GET["smile"]) ? "true" : "false"; // use smile instead of heart
+            $smileemoji = $_GET["icon"] ?? "smile";
             $u = $_GET["m"] ?? "normal";
             $mc  = $_GET["mustcontain"] ?? '';
             $symbolsfile =  $_GET["symbolsfile"] ?? 'symbols.png';
+            if (isset($_GET["smile"])) {
+                $aa = "symbols_" . $smileemoji . ".png";
+                if (file_exists($aa) === false) {
+                    echo "</script><h2>Warning File " . $aa . " does not exist!</h2><script>";
+                } else {
+                    $symbolsfile = $aa;
+                }
+            }
+
 
             echo "var mustcontain = [ $mc ];";
             echo "\r\n";
@@ -198,17 +208,22 @@
             echo "\r\n";
             echo "var datetoday = '$now';";
             echo "\r\n";
+            echo "var smileemoji = '$smileemoji';";
+            echo "\r\n";
             echo "var maints = $ts;";
             echo "\r\n";
             echo "var heartcreate = $heartcreate;";
             echo "\r\n";
             echo "var smile = $smile;";
             echo "\r\n";
-            echo "var symbolsfile = smile ? 'symbols_smile.png' : '$symbolsfile';";
+            echo "var symbolsfile = '$symbolsfile';";
             echo "\r\n";
             echo "\r\n";
 
             ?>
+            if (smile) {
+                heartcreate = 0;
+            }
 
             function doeseqscontain_help(eq, i) {
                 var a = parseInt(mustcontain[i]);
@@ -302,7 +317,10 @@
             function getSymbol(offset) {
                 // var sy = symbols[offset % symbols.length];
                 var t = 100;
-                var sy = smile ?  '🤔' : '❤️';
+                var sy = smile ? '🤔' : '❤️';
+                if (smileemoji === "tomato") {
+                    sy = '🍅';
+                }
                 while (sy in lookupSymbols && t-- > 0) {
                     sy = symbols[offset++ % symbols.length];
                 }
@@ -909,8 +927,8 @@
                 ];
                 return equations;
             }
-        
-           
+
+
 
             function create_equations() {
                 /*
@@ -1125,6 +1143,9 @@
                 populateJJ();
                 console.log(JSON.stringify(lookupJJ));
                 setTimeout("populatesharebutton()", 100);
+                if (smile == true) {
+                    setTimeout("hideForSmile()", 30);
+                }
                 // setTimeout("loadImg2Canvas()", 100);
                 <?php
                 if (isset($_GET["dump"])) {
@@ -1172,9 +1193,9 @@
                 for (var i = 0; i < 11; i++) {
                     for (var j = 0; j < 5; j++) {
                         var id = "tdiv" + j + "x" + i;
-                      //  console.log("id=" + id);
+                        //  console.log("id=" + id);
                         tdiv = document.getElementById(id);
-                       // console.log("tdiv=" + tdiv);
+                        // console.log("tdiv=" + tdiv);
                         if (tdiv !== null) {
                             var aa = tdiv.childNodes;
                             var t = (aa.length == 1 ? aa[0].innerHTML : "X");
@@ -1187,9 +1208,10 @@
 
 
             }
-            var pastgames = {}; 
+            var pastgames = {};
+
             function newgame() {
-               
+                if (goSmile === false) return;
                 setTimeout("greyoutperm()", 100);
                 var info = document.getElementById("count");
                 info.innerHTML = "" + maincount.toFixed(3) + "";
@@ -1199,24 +1221,25 @@
                 maincount = maincount + 0.001;
                 equations = create_equations();
                 var seq = JSON.stringify(equations);
-                var heq = seq.hashCode(); 
-                console.log(heq); 
-                
+                var heq = seq.hashCode();
+                console.log(heq);
+
                 var x = doeseqscontain(equations);
-                if (equations === false || x === false || heq in pastgames ) {
+                if (equations === false || x === false || heq in pastgames) {
                     var info = document.getElementById("info");
                     info.innerHTML = "⌛ (" + (startup_z++) + ").";
                     clearTimeout(startup_id);
+
                     startup_id = setTimeout("newgame()", 10);
                     return null;
                 } else {
                     <?php
-                    if (isset($_GET["heart"])) {
+                    if (isset($_GET["heart"])  || isset($_GET["smile"])) {
                         echo " pastgames[heq] = 1; ";
                         echo "\r\n";
                     }
                     ?>
-                    blueout(); 
+                    blueout();
                     var info = document.getElementById("info");
                     info.innerHTML = "🏠";
                     addAllEquations(0, 0, equations);
@@ -1261,7 +1284,15 @@
             }
 
             function testButton() {
-
+                if (smile) {
+                    goSmile = !goSmile;
+                    let y = document.getElementById("checkbtn");
+                    y.innerHTML = goSmile ? "STOP" : "Continue";
+                    if (goSmile) {
+                        newgame();
+                    }
+                    return;
+                }
                 var x = getAllEquations(0, 0);
                 // console.log(JSON.stringify(x));
                 for (i = 0; i < 6; i++) {
@@ -1325,15 +1356,16 @@
                 // checkAndReport(0, 0);
             }
 
-            function blueout() { 
+            function blueout() {
                 var tdivs = document.getElementsByClassName("ijdiv");
                 var k = 0;
                 for (j = 0; j < tdivs.length; j++) {
-                   // if (isSwappable(tdivs[j]) === "digit") {
-                        tdivs[j].style.background = "blue";
+                    // if (isSwappable(tdivs[j]) === "digit") {
+                    tdivs[j].style.background = "blue";
                     // }
                 }
             }
+
             function randomswap() {
                 var tdivs = document.getElementsByClassName("ijdiv");
                 var stdivs = [];
@@ -1660,6 +1692,7 @@
                     };
 
                     img.src = symbolsfile;
+
                 }
             }
 
@@ -1756,7 +1789,7 @@
                                 b = getXY(divnode);
                                 var fw = Math.floor(canvas1.width / 11);
                                 var fh = Math.floor(canvas1.height / 6);
-                                ctx1.drawImage(img1, b.x, b.y, candata.lengthX, candata.lengthY, fw * j, 45 + fh * i, fw-1, fh-1);
+                                ctx1.drawImage(img1, b.x, b.y, candata.lengthX, candata.lengthY, fw * j, 45 + fh * i, fw - 1, fh - 1);
                             }
                         }
 
@@ -1779,7 +1812,9 @@
                     anchor.download = "sixeqgame.png";
                 } else {
                     anchor.download = "sixeqgame_" + heartcreate + ".png";
+                    let x = document.getElementById("smilecount");
                     heartcreate++;
+                    x.innerHTML = heartcreate;
                     if (heartcreate < 1000) {
                         setTimeout("newgame()", 1000);
                     }
@@ -1795,13 +1830,13 @@
                     var i = Math.floor(random() * 11);
                     var j = Math.floor(random() * 5);
                     var id = "tdiv" + j + "x" + i;
-                   // console.log("id=" + id);
+                    // console.log("id=" + id);
                     tdiv = document.getElementById(id);
-                   // console.log("tdiv=" + tdiv);
+                    // console.log("tdiv=" + tdiv);
                     if (tdiv !== null) {
                         var aa = tdiv.childNodes;
                         var t = (aa.length == 1 ? aa[0].innerHTML : "X");
-                     //   console.log("t=" + t);
+                        //   console.log("t=" + t);
                         if (t in lookupSymbols) {
                             var ret = {};
                             ret.tdiv = tdiv;
@@ -1910,6 +1945,7 @@
     <button class="bottombtn" id="downloadbtn" onclick="downloadstart()">Download</button>
 
     <button class="bottombtn" id="checkbtn" onclick="testButton()">Check</button>
+    <span id="smilecount"></span>
 
 
 
@@ -1926,6 +1962,27 @@
         <button id="newgame" onClick="newgame()">New Game</button>
     </p>
     <script>
+        var goSmile = true;
+
+        function hide(id) {
+            let x = document.getElementById(id);
+            x.style.display = "none";
+        }
+
+        function hideForSmile() {
+
+            hide("moreinfobtn");
+            hide("sharebtn");
+            hide("permabtn");
+            hide("downloadbtn");
+
+            hide("downloadlink");
+            hide("info2");
+
+            let y = document.getElementById("checkbtn");
+            y.innerHTML = "STOP";
+        }
+
         function toggleInfo() {
             setTimeout("stopDownloadAnim()", 100);
             var x = document.getElementById("moreinfo");
